@@ -320,7 +320,7 @@ class ProxyServerIntegrationTest {
                 line = reader.readLine();
             } while (line != null && !line.isEmpty());
 
-            // 包装 TLS（信任所有）：验证 SNI 兑底→无 SNI 回退 CONNECT host 签发与服务端 SslHandler 挂载
+            // 包装 TLS（信任所有）：验证 SNI 兜底→无 SNI 回退 CONNECT host 签发与服务端 SslHandler 挂载
             javax.net.ssl.TrustManager[] trustAll = new javax.net.ssl.TrustManager[]{
                     new javax.net.ssl.X509TrustManager() {
                         public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {

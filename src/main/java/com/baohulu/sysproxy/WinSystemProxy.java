@@ -74,6 +74,9 @@ public class WinSystemProxy {
             log.error("系统代理写入失败: ProxyEnable={}, ProxyServer={}", enableOk, serverOk);
             return false;
         }
+        // 哨兵兜底：强杀/点 X 等非正常退出时 shutdown hook 不会执行，
+        // 由独立哨兵进程轮询本进程存活并在死亡后还原原值，防死代理挡路断网
+        ProxyGuard.start(ProcessHandle.current().pid(), originalEnable, originalServer);
         return true;
     }
 
