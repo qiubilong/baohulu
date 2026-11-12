@@ -58,7 +58,8 @@
 | 缺陷修复: 注入头回写流量记录 | ✅ 已完成 | `6008efe` | 用户实测发现开关开启后面板请求头看不到 grayreleasetag：注入发生在上游头副本且不回写 entry（注入本身已生效，tc_i12 上游断言为证）；修复为 modifyHeaders 后回写 requestHeaders，面板展示发往上游的最终形态；tc_i12 补面板详情断言，26/26 通过 |
 | 功能移除: 面板下载 CA 证书 | ✅ 已完成 | `71a5332` | 用户要求：下载功能下线，仅保留一键安装；删 GET /api/cert 路由与 handleCertDownload、CaCertManager.getCaCertificatePem、面板下载链接；启动警告/握手降噪提示改为引导「一键安装CA」；CaInstaller 复验失败提示改附 certutil 命令与 PEM 路径；README 方式二改为直接用 PEM 文件；tc_i06 删除，TC-U09/U10 改读文件断言，25/25 通过 |
 | 新增功能: 详情区复制 URL / cURL 按钮 | ✅ 已完成 | `8374288` | 用户新需求：Tab 行右侧「复制URL」「复制cURL」；cURL 为 CMD 兼容单行命令（-X 方法 + URL + -H 头 + -d 体，剔除 Host/Content-Length/Connection，内部双引号转 \"、换行换空格），Postman Import → Raw text 可直接导入重放；剪贴板 clipboard API 主路径 + execCommand 降级；纯前端零后端改动，UI 交互归 TC-M04 手工覆盖，25/25 回归通过 |
-| 新增功能: 代理还原哨兵（强杀兜底） | ✅ 已完成 | （本次提交） | 用户实测断网：工具被强杀（Win11 默认 Windows Terminal 点 X = 连坐杀进程树，shutdown hook 无机会执行）→死代理挡路全系统断网；新增 ProxyGuard：接管代理时落 %TEMP% 哨兵 bat（tasklist 2s 轮询工具 PID）经 PowerShell Start-Process 拉到独立隐藏控制台（脱离工具进程树，不受连坐），工具死亡即还原原值并自删；真机验收 taskkill /F 后 6s 内注册表还原原值、bat 自删、哨兵退出；README 常见问题补哨兵说明+自助 reg 命令，25/25 回归通过 |
+| 新增功能: 代理还原哨兵（强杀兜底） | ✅ 已完成 | `5e1d37b` | 用户实测断网：工具被强杀（Win11 默认 Windows Terminal 点 X = 连坐杀进程树，shutdown hook 无机会执行）→死代理挡路全系统断网；新增 ProxyGuard：接管代理时落 %TEMP% 哨兵 bat（tasklist 2s 轮询工具 PID）经 PowerShell Start-Process 拉到独立隐藏控制台（脱离工具进程树，不受连坐），工具死亡即还原原值并自删；真机验收 taskkill /F 后 6s 内注册表还原原值、bat 自删、哨兵退出；README 常见问题补哨兵说明+自助 reg 命令，25/25 回归通过 |
+| 新增功能: 默认域名过滤 + 一键切换全部 | ✅ 已完成 | （本次提交） | 用户需求：默认仅看 ifengqun.com 业务流量，可一键切回全部；纯前端实现（app.js DEFAULT_DOMAIN_FILTER 默认填入过滤框+存量加载后 applyFilter 刷新计数；panel.html 工具栏加「全部域名/仅业务域名」切换按钮，文案随过滤词状态联动，手输自定义词时按钮自动变「仅业务域名」可一键切回）；零后端改动，25/25 回归 + 真机冒烟（18899 实例验证三要素已入 jar），UI 交互归 TC-M04 手工覆盖 |
 
 ## 批次记录
 ### 批次 1（Task 1-3）：工程骨架 + 数据基础 + 证书基础

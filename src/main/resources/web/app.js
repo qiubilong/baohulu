@@ -91,8 +91,25 @@ function selectRow(tr, id) {
 
 /* ---------- 域名过滤（本地即时过滤） ---------- */
 
+/** 默认业务域名过滤词：面板打开时仅看该域名，一键可切回全部域名 */
+const DEFAULT_DOMAIN_FILTER = 'ifengqun.com';
+
 const filterInput = document.getElementById('domain-filter');
+const scopeBtn = document.getElementById('btn-domain-scope');
+filterInput.value = DEFAULT_DOMAIN_FILTER;
 filterInput.addEventListener('input', applyFilter);
+filterInput.addEventListener('input', updateScopeBtn);
+
+/** 过滤词为默认业务域名时展示「全部域名」（点击看全部），否则展示「仅业务域名」（点击切回） */
+function updateScopeBtn() {
+    scopeBtn.textContent = filterInput.value.trim() === DEFAULT_DOMAIN_FILTER ? '全部域名' : '仅业务域名';
+}
+
+scopeBtn.addEventListener('click', () => {
+    filterInput.value = filterInput.value.trim() === DEFAULT_DOMAIN_FILTER ? '' : DEFAULT_DOMAIN_FILTER;
+    applyFilter();
+    updateScopeBtn();
+});
 
 function matchFilter(entry) {
     const keyword = filterInput.value.trim().toLowerCase();
@@ -449,6 +466,8 @@ async function loadExisting() {
         const data = await resp.json();
         // 列表为最新在前，逐条插入（保持顺序）
         data.list.forEach((entry) => addRow(entry));
+        // 默认过滤词已生效，刷新可见计数与行隐藏态
+        applyFilter();
     } catch (e) {
         console.warn('加载存量流量失败', e);
     }
