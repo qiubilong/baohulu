@@ -42,7 +42,7 @@
 | TC-I05 | /api/clear 方法校验与清空 | 正常/异常 | 已有流量 | GET /api/clear → 405；POST → 清空 | GET 405；POST 200 后列表 total=0 | 高 |
 | TC-I07 | WebSocket 实时推送与心跳 | 正常 | WS 连 /ws | sendPing 等 Pong；经代理产生新请求 | onPong 收到心跳响应；onText 收到 JSON，含 id/host/method | 高 |
 | TC-I08 | 域名过滤（服务端） | 正常 | 已捕获多域名 | GET /api/traffic?domain=xxx | 仅返回 host 含关键字的记录 | 中 |
-| TC-I09 | CONNECT 隧道 MITM 链路 | 正常/异常 | CONNECT 指向已关闭端口 | raw CONNECT→TLS 握手（信任所有）→发 GET | 200 Connection Established；握手成功（SNI 兑底签发+服务端 TLS 挂载生效）；上游不可达回 502 | 高 |
+| TC-I09 | CONNECT 隧道 MITM 链路 | 正常/异常 | CONNECT 指向已关闭端口 | raw CONNECT→TLS 握手（信任所有）→发 GET | 200 Connection Established；握手成功（SNI 兜底签发+服务端 TLS 挂载生效）；上游不可达回 502 | 高 |
 | TC-I10 | 二进制响应捕获标记 | 边界 | 内嵌上游返回 image/png | 经代理请求后查详情 | responseBinary=true；responseSize 正确；不保存文本 | 中 |
 | TC-I11 | Accept-Encoding 剥离（大小写不敏感） | 正常 | 验收检查门修复后补入 | 客户端经代理携 Accept-Encoding: gzip 请求，内嵌上游记录收到的请求头 | 上游不收到任何大小写形态的 Accept-Encoding（保证响应体明文、JSON 可格式化） | 高 |
 | TC-I12 | 灰度标记注入开关端到端 | 正常 | 面板 API 可达 | GET /api/gray 默认 false；POST /api/gray/toggle 后经代理请求；再 toggle 关闭后请求 | 默认不注入；开启后上游收到 grayreleasetag=gray；关闭后恢复不注入 | 高 |
