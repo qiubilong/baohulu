@@ -54,6 +54,7 @@
 | 检查门修复: Accept-Encoding 剥离大小写不敏感 + TC-I11 | ✅ 已完成 | `3a64253` | 验收检查门 Important #1，修复后 21/21 通过 |
 | 手工验证反馈修复: CA 信任引导日志 + certificate_unknown 降噪 | ✅ 已完成 | `e0b856d` | TC-M01 实测发现：接管代理后未装 CA 阶段整机应用 HTTPS 集中失败刷屏，首次人话提示/后续降 DEBUG + 启动警告 |
 | 手工验证反馈功能: 面板一键安装 CA | ✅ 已完成 | `852f5e7` | TC-M01 实测发现：证书向导「自动选择存储」误装中级导致信任不生效（中级存储两份残留为证）；新增 CaInstaller（certutil -addstore -user Root + Windows-ROOT KeyStore 指纹复验，GraalVM 实证可读）+ POST /api/cert/install + 面板按钮 + README 双方式指引；留 TC-M05 手工验证 |
+| 新增功能: 灰度标记注入 grayreleasetag=gray（FR4 首落地） | ✅ 已完成 | `ec07139` | 用户新需求：GrayHeaderModifier（AtomicBoolean 开关 + equalsIgnoreCase 防重，接入 M1 预留 HeaderModifier 拦截点，BaohuluMain 装配替换 NOOP）+ GET /api/gray / POST /api/gray/toggle + 面板「灰度」按钮实时生效；单元 4 例 + 集成 tc_i12，26/26 通过 |
 
 ## 批次记录
 ### 批次 1（Task 1-3）：工程骨架 + 数据基础 + 证书基础

@@ -6,8 +6,8 @@
 
 | 类型 | 数量 | 说明 |
 |------|------|------|
-| 单元测试 | 12 | JUnit 5，纯内存/临时目录，零 Mock 零外网 |
-| 集成测试 | 11 | 进程内 Netty 服务 + JDK HttpServer 内嵌上游 + JDK WebSocket 客户端 |
+| 单元测试 | 16 | JUnit 5，纯内存/临时目录，零 Mock 零外网 |
+| 集成测试 | 12 | 进程内 Netty 服务 + JDK HttpServer 内嵌上游 + JDK WebSocket 客户端 |
 | 手工验证 | 4 | 系统级副作用与真实环境项，不自动化 |
 
 ## 单元测试
@@ -26,6 +26,10 @@
 | TC-U10 | CaCertManager 加载复用同 CA | 正常 | @TempDir 已生成 | 第二次构造后 getCaCertificatePem | 与第一次输出逐字节一致 | 高 |
 | TC-U11 | DynamicCertManager 签发与缓存 | 正常 | 真实 CaCertManager | getOrCreateSslContext("a.com") 两次 + "b.com" 一次 | 返回服务端 SslContext；同域名同实例（缓存命中）；不同域名不同实例 | 高 |
 | TC-U12 | DynamicCertManager IP 分支签发 | 正常 | 同上 | getOrCreateSslContext("127.0.0.1") | iPAddress SAN 分支正常签发且独立缓存；均服务端模式（SAN 内容校验受 SslContext API 限制，由 TC-I09 真实握手与 TC-M01 手工 MITM 覆盖） | 中 |
+| TC-U13 | GrayHeaderModifier 默认关闭不注入 | 正常 | 默认实例 | modifyHeaders 调用 | 原有头保留，无 grayreleasetag | 高 |
+| TC-U14 | GrayHeaderModifier 开启注入 | 正常 | toggle 后 | modifyHeaders | 注入 grayreleasetag=gray | 高 |
+| TC-U15 | GrayHeaderModifier 已有同款头不覆盖 | 边界 | toggle 后，预置 GrayReleaseTag | modifyHeaders | 保留原值，不追加重复头 | 中 |
+| TC-U16 | GrayHeaderModifier 关闭后恢复不注入 | 正常 | 开启后再 toggle | modifyHeaders | 恢复无注入 | 高 |
 
 ## 集成测试（ProxyServerIntegrationTest，进程内真实装配）
 
@@ -42,6 +46,7 @@
 | TC-I09 | CONNECT 隧道 MITM 链路 | 正常/异常 | CONNECT 指向已关闭端口 | raw CONNECT→TLS 握手（信任所有）→发 GET | 200 Connection Established；握手成功（SNI 兑底签发+服务端 TLS 挂载生效）；上游不可达回 502 | 高 |
 | TC-I10 | 二进制响应捕获标记 | 边界 | 内嵌上游返回 image/png | 经代理请求后查详情 | responseBinary=true；responseSize 正确；不保存文本 | 中 |
 | TC-I11 | Accept-Encoding 剥离（大小写不敏感） | 正常 | 验收检查门修复后补入 | 客户端经代理携 Accept-Encoding: gzip 请求，内嵌上游记录收到的请求头 | 上游不收到任何大小写形态的 Accept-Encoding（保证响应体明文、JSON 可格式化） | 高 |
+| TC-I12 | 灰度标记注入开关端到端 | 正常 | 面板 API 可达 | GET /api/gray 默认 false；POST /api/gray/toggle 后经代理请求；再 toggle 关闭后请求 | 默认不注入；开启后上游收到 grayreleasetag=gray；关闭后恢复不注入 | 高 |
 
 ## 手工验证项（不自动化）
 
