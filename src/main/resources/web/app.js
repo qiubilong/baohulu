@@ -117,6 +117,22 @@ function applyFilter() {
 
 /* ---------- 暂停 / 清空 ---------- */
 
+document.getElementById('btn-install-cert').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-install-cert');
+    btn.disabled = true;
+    btn.textContent = '安装中…';
+    try {
+        const resp = await fetch('/api/cert/install', { method: 'POST' });
+        const data = await resp.json();
+        alert(data.ok ? '安装成功：' + data.message : '安装失败：' + (data.message || data.error || '未知原因'));
+    } catch (e) {
+        alert('安装请求失败：' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '一键安装CA';
+    }
+});
+
 document.getElementById('btn-pause').addEventListener('click', function () {
     paused = !paused;
     this.textContent = paused ? '继续' : '暂停';

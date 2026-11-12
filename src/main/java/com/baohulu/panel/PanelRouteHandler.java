@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baohulu.cert.CaCertManager;
+import com.baohulu.cert.CaInstaller;
 import com.baohulu.traffic.TrafficEntry;
 import com.baohulu.traffic.TrafficStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -94,6 +95,7 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
             case "/style.css" -> serveStatic(ctx, request, "style.css");
             case "/api/traffic" -> handleTrafficList(ctx, request, queryString);
             case "/api/cert" -> handleCertDownload(ctx, request);
+            case "/api/cert/install" -> handleCertInstall(ctx, request);
             case "/api/clear" -> handleClear(ctx, request);
             default -> {
                 if (path.startsWith("/api/traffic/")) {
@@ -164,6 +166,21 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
         response.headers().set("Content-Disposition", "attachment; filename=baohulu-ca.crt");
         HttpUtil.setContentLength(response, pemBytes.length);
         writeResponse(ctx, request, response);
+    }
+
+    /**
+     * CA 一键安装：POST /api/cert/install（certutil 写入当前用户 Root 存储 + 指纹复验），
+     * 规避证书导入向导「自动选择存储」误装入中级导致信任不生效的坑
+     */
+    private void handleCertInstall(ChannelHandlerContext ctx, FullHttpRequest request) {
+        if (!io.netty.handler.codec.http.HttpMethod.POST.equals(request.method())) {
+            writeJson(ctx, request, HttpResponseStatus.METHOD_NOT_ALLOWED, Map.of("ok", false, "error", "仅支持 POST"));
+            return;
+        }
+        CaInstaller.InstallResult result = CaInstaller.installToUserRoot(
+                caCertManager.getCaCertificate(), caCertManager.getCertPath());
+        HttpResponseStatus status = result.ok() ? HttpResponseStatus.OK : HttpResponseStatus.INTERNAL_SERVER_ERROR;
+        writeJson(ctx, request, status, Map.of("ok", result.ok(), "message", result.message()));
     }
 
     /**

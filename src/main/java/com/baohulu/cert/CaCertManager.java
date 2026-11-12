@@ -86,6 +86,15 @@ public class CaCertManager {
     }
 
     /**
+     * CA 证书文件绝对路径（面板一键安装 certutil 入参用）
+     *
+     * @return ca-cert.pem 路径
+     */
+    public Path getCertPath() {
+        return caDir.resolve(CA_CERT_FILE);
+    }
+
+    /**
      * 导出 CA 证书 PEM 文本（面板下载安装用）
      *
      * @return PEM 格式证书文本
