@@ -11,7 +11,7 @@ import com.baohulu.cert.DynamicCertManager;
 import com.baohulu.config.AppConfig;
 import com.baohulu.proxy.HeaderModifier;
 import com.baohulu.proxy.UpstreamForwarder;
-import com.baohulu.server.PanelPlaceholderHandler;
+import com.baohulu.panel.PanelRouteHandler;
 import com.baohulu.server.ProxyServerInitializer;
 import com.baohulu.traffic.TrafficStore;
 
@@ -42,9 +42,10 @@ public class BaohuluMain {
         DynamicCertManager dynamicCertManager = new DynamicCertManager(caCertManager);
         UpstreamForwarder upstreamForwarder = new UpstreamForwarder(
                 trafficStore, HeaderModifier.NOOP, config.bodyMaxKb());
-        // 面板 handler：Task 6 接入真实实现，当前占位
+        // 面板路由：静态资源 + REST + WebSocket 推送
         ProxyServerInitializer initializer = new ProxyServerInitializer(
-                dynamicCertManager, upstreamForwarder, PanelPlaceholderHandler::new);
+                dynamicCertManager, upstreamForwarder,
+                () -> new PanelRouteHandler(trafficStore, caCertManager, config.port()));
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
