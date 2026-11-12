@@ -52,6 +52,7 @@
 | 工程修补: .gitignore | ✅ 已完成 | `680123a` | shade 副产物 dependency-reduced-pom.xml 忽略 |
 | 最终评审修复: /api/clear 方法校验 + 容量防御 | ✅ 已完成 | `bb77c31` | spec-plan 步骤 5 自评审 Important/Minor 各 1 项修复 |
 | 检查门修复: Accept-Encoding 剥离大小写不敏感 + TC-I11 | ✅ 已完成 | `3a64253` | 验收检查门 Important #1，修复后 21/21 通过 |
+| 手工验证反馈修复: CA 信任引导日志 + certificate_unknown 降噪 | ✅ 已完成 | `e0b856d` | TC-M01 实测发现：接管代理后未装 CA 阶段整机应用 HTTPS 集中失败刷屏，首次人话提示/后续降 DEBUG + 启动警告 |
 
 ## 批次记录
 ### 批次 1（Task 1-3）：工程骨架 + 数据基础 + 证书基础
