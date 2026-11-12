@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>baohulu · 流量面板</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header id="toolbar">
+    <span id="logo">🫖 baohulu</span>
+    <input id="domain-filter" type="text" placeholder="按域名过滤，如 servicewechat.com">
+    <button id="btn-pause">暂停</button>
+    <button id="btn-clear">清空</button>
+    <a id="btn-cert" href="/api/cert" download>下载CA证书</a>
+    <span id="conn-status" class="off">连接中...</span>
+</header>
+<main>
+    <section id="list-panel">
+        <table id="traffic-table">
+            <thead>
+            <tr>
+                <th style="width:46px">ID</th>
+                <th style="width:80px">时间</th>
+                <th style="width:52px">方法</th>
+                <th>Host / Path</th>
+                <th style="width:56px">状态</th>
+                <th style="width:64px">耗时</th>
+                <th style="width:72px">大小</th>
+            </tr>
+            </thead>
+            <tbody id="traffic-body"></tbody>
+        </table>
+        <div id="empty-tip">暂无流量：请将系统代理指向 127.0.0.1:8899 并重启微信</div>
+    </section>
+    <section id="detail-panel">
+        <div id="detail-empty">点击左侧流量查看详情</div>
+        <div id="detail" class="hidden">
+            <div id="detail-tabs"></div>
+            <div id="detail-body"></div>
+        </div>
+    </section>
+</main>
+<footer id="statusbar">
+    <span id="stat-total">共 0 条</span>
+    <span id="stat-filtered"></span>
+</footer>
+<script src="/app.js"></script>
+</body>
+</html>

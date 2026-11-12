@@ -1,0 +1,291 @@
+/* baohulu 面板样式：暗色主题 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    background: #1e1f24;
+    color: #d7dae0;
+    font: 13px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ---------- 工具栏 ---------- */
+#toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: #27292f;
+    border-bottom: 1px solid #3a3d45;
+    flex-shrink: 0;
+}
+
+#logo {
+    font-weight: 600;
+    color: #7ec699;
+}
+
+#domain-filter {
+    flex: 0 0 320px;
+    padding: 5px 10px;
+    background: #1e1f24;
+    border: 1px solid #3a3d45;
+    border-radius: 4px;
+    color: #d7dae0;
+    outline: none;
+}
+
+#domain-filter:focus {
+    border-color: #5b8def;
+}
+
+#toolbar button, #btn-cert {
+    padding: 5px 14px;
+    background: #33363e;
+    border: 1px solid #3a3d45;
+    border-radius: 4px;
+    color: #d7dae0;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+#toolbar button:hover, #btn-cert:hover {
+    background: #3d414a;
+}
+
+#toolbar button.active {
+    background: #5b8def;
+    border-color: #5b8def;
+}
+
+#conn-status {
+    margin-left: auto;
+    font-size: 12px;
+}
+
+#conn-status.on {
+    color: #7ec699;
+}
+
+#conn-status.off {
+    color: #e06c75;
+}
+
+/* ---------- 主体布局 ---------- */
+main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+#list-panel {
+    flex: 1.2;
+    overflow: auto;
+    border-right: 1px solid #3a3d45;
+    position: relative;
+}
+
+#detail-panel {
+    flex: 1;
+    overflow: auto;
+    min-width: 380px;
+}
+
+/* ---------- 流量表格 ---------- */
+#traffic-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#traffic-table th {
+    position: sticky;
+    top: 0;
+    background: #27292f;
+    padding: 6px 8px;
+    text-align: left;
+    color: #9da2ad;
+    font-weight: 500;
+    border-bottom: 1px solid #3a3d45;
+    z-index: 1;
+}
+
+#traffic-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #26282e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#traffic-table tbody tr {
+    cursor: pointer;
+}
+
+#traffic-table tbody tr:hover {
+    background: #2a2d34;
+}
+
+#traffic-table tbody tr.selected {
+    background: #2d3a55;
+}
+
+tr.filtered-out {
+    display: none;
+}
+
+.host-cell .host {
+    color: #61afef;
+    margin-right: 4px;
+}
+
+.method {
+    color: #c678dd;
+    font-weight: 600;
+}
+
+.status {
+    font-weight: 600;
+}
+
+.status.s-ok {
+    color: #7ec699;
+}
+
+.status.s-bad {
+    color: #e5c07b;
+}
+
+.status.s-err {
+    color: #e06c75;
+}
+
+#empty-tip {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #6b7080;
+    padding: 30px;
+}
+
+/* ---------- 详情 ---------- */
+#detail-empty {
+    padding: 30px;
+    text-align: center;
+    color: #6b7080;
+}
+
+#detail-tabs {
+    position: sticky;
+    top: 0;
+    display: flex;
+    gap: 4px;
+    background: #27292f;
+    padding: 6px 10px;
+    border-bottom: 1px solid #3a3d45;
+    z-index: 1;
+}
+
+#detail-tabs button {
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #9da2ad;
+    cursor: pointer;
+}
+
+#detail-tabs button.active {
+    background: #33363e;
+    color: #d7dae0;
+    border-color: #3a3d45;
+}
+
+#detail-body {
+    padding: 10px 14px;
+}
+
+.kv-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.kv-table td {
+    padding: 3px 8px;
+    border-bottom: 1px solid #26282e;
+    vertical-align: top;
+    word-break: break-all;
+}
+
+.kv-key {
+    color: #61afef;
+    width: 200px;
+}
+
+.kv-value {
+    color: #d7dae0;
+}
+
+pre.json-view, pre.plain-view {
+    background: #17181c;
+    border: 1px solid #3a3d45;
+    border-radius: 4px;
+    padding: 10px;
+    overflow: auto;
+    max-height: 60vh;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font: 12px/1.5 Consolas, "Courier New", monospace;
+}
+
+.json-key {
+    color: #e5c07b;
+}
+
+.json-string {
+    color: #98c379;
+}
+
+.json-number {
+    color: #d19a66;
+}
+
+.json-literal {
+    color: #c678dd;
+}
+
+.binary-tip, .truncated-tip {
+    padding: 12px;
+    color: #9da2ad;
+    background: #26282e;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.truncated-tip {
+    color: #e5c07b;
+}
+
+/* ---------- 状态栏 ---------- */
+#statusbar {
+    display: flex;
+    gap: 20px;
+    padding: 4px 14px;
+    background: #27292f;
+    border-top: 1px solid #3a3d45;
+    color: #6b7080;
+    font-size: 12px;
+    flex-shrink: 0;
+}
