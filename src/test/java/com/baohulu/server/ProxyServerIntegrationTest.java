@@ -69,11 +69,15 @@ class ProxyServerIntegrationTest {
     /** 走代理客户端（转发流量） */
     private static HttpClient proxyClient;
 
+    /** 最近一次内嵌上游收到的请求头名（供转发剥离断言，Headers 键保留 wire 原始大小写） */
+    private static volatile List<String> upstreamSeenHeaderNames = List.of();
+
     @BeforeAll
     static void startAll(@TempDir Path tempDir) throws Exception {
         // 内嵌上游：任意路径返回 JSON，/binary 返回二进制（验二进制标记）
         upstream = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         upstream.createContext("/", exchange -> {
+            upstreamSeenHeaderNames = List.copyOf(exchange.getRequestHeaders().keySet());
             if (exchange.getRequestURI().getPath().endsWith("/binary")) {
                 byte[] body = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A};
                 exchange.getResponseHeaders().set("Content-Type", "image/png");
@@ -370,5 +374,24 @@ class ProxyServerIntegrationTest {
         Map<String, Object> detail = JSON.readValue(
                 get(directClient, "/api/traffic/" + id).body(), Map.class);
         assertEquals(Boolean.TRUE, detail.get("responseBinary"), "二进制响应应置标记");
+    }
+
+    /**
+     * 经代理转发应剥离压缩协商头（大小写不敏感）：上游不应收到任何形态的 Accept-Encoding，
+     * 否则上游返回 gzip 压缩响应，面板响应体将乱码、JSON 无法格式化
+     */
+    @Test
+    void tc_i11_accept_encoding_stripped_case_insensitive() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(
+                        URI.create("http://127.0.0.1:" + upstreamPort + "/gzip-check"))
+                .timeout(java.time.Duration.ofSeconds(10))
+                // 模拟 Chromium 混合大小写发送，覆盖大小写敏感剥离缺陷
+                .header("Accept-Encoding", "gzip, deflate, br")
+                .GET().build();
+        HttpResponse<String> response = proxyClient.send(request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode());
+        assertTrue(upstreamSeenHeaderNames.stream().noneMatch(
+                        name -> name.equalsIgnoreCase("accept-encoding")),
+                "上游不应收到任何大小写形态的 Accept-Encoding, 实际: " + upstreamSeenHeaderNames);
     }
 }

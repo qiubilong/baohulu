@@ -165,9 +165,12 @@ public class UpstreamForwarder {
     private HttpRequest buildUpstreamRequest(FullHttpRequest clientRequest, String targetUrl,
                                              byte[] requestBodyBytes) {
         Map<String, String> headers = toHeaderMap(clientRequest.headers());
-        headers.keySet().removeIf(name -> HOP_BY_HOP_HEADERS.contains(name.toLowerCase(Locale.ROOT)));
-        // 移除压缩协商：让上游返回未压缩明文，面板展示免解压
-        headers.remove("accept-encoding");
+        // 头名大小写不敏感（Netty 保留 wire 原始大小写），必须小写归一后匹配剔除；
+        // Accept-Encoding 一并剥离：让上游返回未压缩明文，面板展示免解压
+        headers.keySet().removeIf(name -> {
+            String lower = name.toLowerCase(Locale.ROOT);
+            return HOP_BY_HOP_HEADERS.contains(lower) || "accept-encoding".equals(lower);
+        });
         // M2 拦截点：域名级 Header 注入
         headerModifier.modifyHeaders(hostOf(targetUrl), headers);
 
