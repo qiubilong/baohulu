@@ -144,7 +144,7 @@ public class UpstreamForwarder {
         entry.setMethod(request.method().name());
         entry.setHost(stripPort(hostWithPort));
         entry.setUrl(buildTargetUrl(scheme, hostWithPort, relativeUri));
-        String uri = relativeUri;
+        String uri = normalizeRecordUri(relativeUri);
         int queryIndex = uri.indexOf('?');
         if (queryIndex >= 0) {
             entry.setPath(uri.substring(0, queryIndex));
@@ -306,6 +306,24 @@ public class UpstreamForwarder {
             return relativeUri;
         }
         return scheme + "://" + hostWithPort + relativeUri;
+    }
+
+    /**
+     * 规范化用于记录的 URI：HTTP 代理请求的绝对 URI 剥离 scheme 与 authority，只留 path[?query]
+     *
+     * @param uri 原始 URI
+     * @return 相对 URI
+     */
+    private String normalizeRecordUri(String uri) {
+        if (!uri.startsWith("http://") && !uri.startsWith("https://")) {
+            return uri;
+        }
+        URI parsed = URI.create(uri);
+        String path = parsed.getRawPath();
+        String query = parsed.getRawQuery();
+        String relative = (path == null || path.isEmpty() ? "/" : path)
+                + (query == null ? "" : "?" + query);
+        return relative;
     }
 
     /**
