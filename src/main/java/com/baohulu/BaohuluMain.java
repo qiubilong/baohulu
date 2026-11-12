@@ -71,6 +71,8 @@ public class BaohuluMain {
                 }
                 if (systemProxy.enable(config.port())) {
                     log.info("系统代理已指向 127.0.0.1:{}, 重启微信后生效; 工具退出时自动还原", config.port());
+                    log.warn("注意: 安装 CA 证书前, 本机走系统代理的应用 HTTPS 访问将失败, "
+                            + "请尽快从面板 http://127.0.0.1:{}/ 下载 CA 并安装到「受信任的根证书颁发机构」", config.port());
                 } else {
                     log.error("系统代理设置失败, 请手动将系统代理指向 127.0.0.1:{}", config.port());
                 }
