@@ -13,6 +13,7 @@ import com.baohulu.proxy.HeaderModifier;
 import com.baohulu.proxy.UpstreamForwarder;
 import com.baohulu.panel.PanelRouteHandler;
 import com.baohulu.server.ProxyServerInitializer;
+import com.baohulu.sysproxy.WinSystemProxy;
 import com.baohulu.traffic.TrafficStore;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -61,7 +62,26 @@ public class BaohuluMain {
             log.info("baohulu 已启动, 监听=127.0.0.1:{}, 流量缓冲={} 条, 面板=http://127.0.0.1:{}/",
                     config.port(), config.bufferCapacity(), config.port());
 
+            // 端口就绪后接管系统代理（可 -Dbaohulu.auto.proxy=false 关闭）
+            WinSystemProxy systemProxy = null;
+            if (config.autoProxy()) {
+                systemProxy = new WinSystemProxy();
+                if (systemProxy.isResiduePointingTo(config.port())) {
+                    log.warn("检测到系统代理残留指向本工具(上次可能异常退出), 退出时将一并还原");
+                }
+                if (systemProxy.enable(config.port())) {
+                    log.info("系统代理已指向 127.0.0.1:{}, 重启微信后生效; 工具退出时自动还原", config.port());
+                } else {
+                    log.error("系统代理设置失败, 请手动将系统代理指向 127.0.0.1:{}", config.port());
+                }
+            }
+
+            final WinSystemProxy proxyToRestore = systemProxy;
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                // 优先还原系统代理, 避免后续清理阻塞导致代理长时间悬挂
+                if (proxyToRestore != null) {
+                    proxyToRestore.restore();
+                }
                 log.info("baohulu 正在退出, 释放资源...");
                 bossGroup.shutdownGracefully();
                 workerGroup.shutdownGracefully();
