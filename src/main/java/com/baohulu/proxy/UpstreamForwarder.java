@@ -110,7 +110,7 @@ public class UpstreamForwarder {
         String targetUrl = buildTargetUrl(scheme, hostWithPort, relativeUri);
         HttpRequest upstreamRequest;
         try {
-            upstreamRequest = buildUpstreamRequest(clientRequest, targetUrl, requestBodyBytes);
+            upstreamRequest = buildUpstreamRequest(clientRequest, entry, targetUrl, requestBodyBytes);
         } catch (Exception e) {
             log.error("构建上游请求失败, url={}", targetUrl, e);
             entry.setError("构建上游请求失败: " + e.getMessage());
@@ -160,10 +160,11 @@ public class UpstreamForwarder {
     }
 
     /**
-     * 构建上游请求：复制头（剔除逐跳头与 Accept-Encoding），应用 M2 Header 拦截点，附带 body
+     * 构建上游请求：复制头（剔除逐跳头与 Accept-Encoding），应用 Header 注入拦截点，附带 body；
+     * 改写完成后的最终头回写流量记录，面板「请求头」展示的即发往上游的真实形态（含注入头）
      */
-    private HttpRequest buildUpstreamRequest(FullHttpRequest clientRequest, String targetUrl,
-                                             byte[] requestBodyBytes) {
+    private HttpRequest buildUpstreamRequest(FullHttpRequest clientRequest, TrafficEntry entry,
+                                             String targetUrl, byte[] requestBodyBytes) {
         Map<String, String> headers = toHeaderMap(clientRequest.headers());
         // 头名大小写不敏感（Netty 保留 wire 原始大小写），必须小写归一后匹配剔除；
         // Accept-Encoding 一并剥离：让上游返回未压缩明文，面板展示免解压
@@ -173,6 +174,8 @@ public class UpstreamForwarder {
         });
         // M2 拦截点：域名级 Header 注入
         headerModifier.modifyHeaders(hostOf(targetUrl), headers);
+        // 面板展示发往上游的最终头（含剥离与注入结果），否则灰度标记等改写无法在面板确认
+        entry.setRequestHeaders(headers);
 
         HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(targetUrl))
                 .timeout(REQUEST_TIMEOUT)

@@ -424,6 +424,17 @@ class ProxyServerIntegrationTest {
                 e.getKey().equalsIgnoreCase("grayreleasetag") && "gray".equals(e.getValue()));
         assertTrue(hit, "开启后上游应收到 grayreleasetag=gray, 实际: " + upstreamSeenHeaders);
 
+        // 面板详情的请求头应展示注入后的最终形态（发往上游视角），否则用户无法在面板确认注入生效
+        Map<String, Object> grayEntry = ((List<Map<String, Object>>) JSON.readValue(
+                        get(directClient, "/api/traffic").body(), Map.class).get("list")).stream()
+                .filter(e -> "/gray-on".equals(e.get("path")))
+                .findFirst().orElseThrow(() -> new AssertionError("未捕获 /gray-on"));
+        Map<String, Object> detailHeaders = (Map<String, Object>) JSON.readValue(
+                get(directClient, "/api/traffic/" + ((Number) grayEntry.get("id")).longValue()).body(),
+                Map.class).get("requestHeaders");
+        assertEquals("gray", detailHeaders.get("grayreleasetag"),
+                "面板请求头应含注入的 grayreleasetag=gray");
+
         // 再次切换关闭后恢复不注入
         assertEquals(false, JSON.readValue(
                 directClient.send(toggle, HttpResponse.BodyHandlers.ofString()).body(), Map.class).get("enabled"));
