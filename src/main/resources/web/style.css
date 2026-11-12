@@ -213,6 +213,17 @@ tr.filtered-out {
     border-color: #3a3d45;
 }
 
+/* Tab 行右侧复制按钮（推齐到行尾） */
+#detail-tabs .tabs-spacer {
+    margin-left: auto;
+}
+
+#detail-tabs .copy-btn {
+    border-color: #3a3d45;
+    color: #61afef;
+    flex-shrink: 0;
+}
+
 #detail-body {
     padding: 10px 14px;
 }

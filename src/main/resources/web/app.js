@@ -219,6 +219,80 @@ function renderTabs(entry) {
         });
         tabs.appendChild(btn);
     });
+    appendCopyButtons(tabs, entry);
+}
+
+/* ---------- 复制 URL / cURL（CMD 兼容格式，可贴 Postman Import 直接执行） ---------- */
+
+function appendCopyButtons(tabs, entry) {
+    const spacer = document.createElement('span');
+    spacer.className = 'tabs-spacer';
+    tabs.appendChild(spacer);
+    tabs.appendChild(buildCopyBtn('复制URL', () => entry.url || ''));
+    tabs.appendChild(buildCopyBtn('复制cURL', () => buildCurl(entry)));
+}
+
+function buildCopyBtn(label, supply) {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.className = 'copy-btn';
+    btn.addEventListener('click', async () => {
+        try {
+            await copyText(supply());
+            btn.textContent = '已复制';
+            setTimeout(() => { btn.textContent = label; }, 1000);
+        } catch (e) {
+            console.warn('复制失败', e);
+        }
+    });
+    return btn;
+}
+
+/**
+ * 生成 CMD 兼容 cURL 命令（单行、双引号包裹、内部 " 转义），
+ * Postman Import → Raw text 可直接导入重放，CMD 也可直接执行
+ */
+function buildCurl(entry) {
+    // Host 由 URL 推导、Content-Length 随 body 自动计算、Connection 为逐跳头，均无需复制
+    const skip = new Set(['host', 'content-length', 'connection']);
+    let cmd = 'curl';
+    if (entry.method && entry.method !== 'GET') {
+        cmd += ' -X ' + entry.method;
+    }
+    cmd += ' "' + (entry.url || '') + '"';
+    Object.entries(entry.requestHeaders || {}).forEach(([name, value]) => {
+        if (!skip.has(name.toLowerCase())) {
+            cmd += ' -H "' + escapeCmd(name) + ': ' + escapeCmd(value) + '"';
+        }
+    });
+    if (entry.requestBody && entry.method !== 'GET' && entry.method !== 'HEAD') {
+        cmd += ' -d "' + escapeCmd(entry.requestBody) + '"';
+    }
+    return cmd;
+}
+
+/** CMD 双引号串内转义：内部双引号转 \"，换行替换为空格（CMD 单行命令遇换行会截断） */
+function escapeCmd(text) {
+    return String(text).replace(/"/g, '\\"').replace(/\r?\n/g, ' ');
+}
+
+async function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+    // 降级：execCommand（旧浏览器 / 剪贴板 API 不可用）
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        if (!document.execCommand('copy')) {
+            throw new Error('execCommand copy 失败');
+        }
+    } finally {
+        document.body.removeChild(textarea);
+    }
 }
 
 function renderTabBody(entry, tab) {

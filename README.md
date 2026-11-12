@@ -70,6 +70,7 @@ certutil -addstore -user Root "%USERPROFILE%\.baohulu\ca\ca-cert.pem"
 - 顶部输入域名关键词即时过滤
 - 「暂停/继续」冻结列表刷新，「清空」一键清空
 - 「灰度」开关切换后实时生效，详情区「请求头」Tab 可确认上游已收到 `grayreleasetag: gray`
+- 详情区右上「复制URL」/「复制cURL」：cURL 为 CMD 兼容单行命令（含方法/请求头/请求体），Postman Import → Raw text 粘贴可直接导入重放，CMD 也可直接执行
 - 详情区切换 概览 / 请求头 / 请求体 / 响应头 / 响应体 Tab，JSON 自动格式化
 
 ## 配置项
