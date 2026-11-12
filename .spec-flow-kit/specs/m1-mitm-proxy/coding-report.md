@@ -56,6 +56,7 @@
 | 手工验证反馈功能: 面板一键安装 CA | ✅ 已完成 | `852f5e7` | TC-M01 实测发现：证书向导「自动选择存储」误装中级导致信任不生效（中级存储两份残留为证）；新增 CaInstaller（certutil -addstore -user Root + Windows-ROOT KeyStore 指纹复验，GraalVM 实证可读）+ POST /api/cert/install + 面板按钮 + README 双方式指引；留 TC-M05 手工验证 |
 | 新增功能: 灰度标记注入 grayreleasetag=gray（FR4 首落地） | ✅ 已完成 | `ec07139` | 用户新需求：GrayHeaderModifier（AtomicBoolean 开关 + equalsIgnoreCase 防重，接入 M1 预留 HeaderModifier 拦截点，BaohuluMain 装配替换 NOOP）+ GET /api/gray / POST /api/gray/toggle + 面板「灰度」按钮实时生效；单元 4 例 + 集成 tc_i12，26/26 通过 |
 | 缺陷修复: 注入头回写流量记录 | ✅ 已完成 | `6008efe` | 用户实测发现开关开启后面板请求头看不到 grayreleasetag：注入发生在上游头副本且不回写 entry（注入本身已生效，tc_i12 上游断言为证）；修复为 modifyHeaders 后回写 requestHeaders，面板展示发往上游的最终形态；tc_i12 补面板详情断言，26/26 通过 |
+| 功能移除: 面板下载 CA 证书 | ✅ 已完成 | `71a5332` | 用户要求：下载功能下线，仅保留一键安装；删 GET /api/cert 路由与 handleCertDownload、CaCertManager.getCaCertificatePem、面板下载链接；启动警告/握手降噪提示改为引导「一键安装CA」；CaInstaller 复验失败提示改附 certutil 命令与 PEM 路径；README 方式二改为直接用 PEM 文件；tc_i06 删除，TC-U09/U10 改读文件断言，25/25 通过 |
 
 ## 批次记录
 ### 批次 1（Task 1-3）：工程骨架 + 数据基础 + 证书基础

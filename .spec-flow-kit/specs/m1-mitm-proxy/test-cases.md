@@ -7,7 +7,7 @@
 | 类型 | 数量 | 说明 |
 |------|------|------|
 | 单元测试 | 16 | JUnit 5，纯内存/临时目录，零 Mock 零外网 |
-| 集成测试 | 12 | 进程内 Netty 服务 + JDK HttpServer 内嵌上游 + JDK WebSocket 客户端 |
+| 集成测试 | 11 | 进程内 Netty 服务 + JDK HttpServer 内嵌上游 + JDK WebSocket 客户端；TC-I06（CA 下载）随下载功能移除而删除（71a5332） |
 | 手工验证 | 4 | 系统级副作用与真实环境项，不自动化 |
 
 ## 单元测试
@@ -23,7 +23,7 @@
 | TC-U07 | AppConfig 默认值 | 正常 | 无相关系统属性 | loadFromSystemProperties | port=8899/capacity=1000/bodyMaxKb=1024/autoProxy=true | 高 |
 | TC-U08 | AppConfig 系统属性覆盖 | 正常 | 设 4 个属性 | loadFromSystemProperties | 全部取属性值；auto.proxy=false 生效 | 高 |
 | TC-U09 | CaCertManager 首次生成并持久化 | 正常 | @TempDir 空目录 | 构造两次（同目录） | 首次生成 ca-cert.pem/ca-key.pem；PEM 非空含 BEGIN CERTIFICATE | 高 |
-| TC-U10 | CaCertManager 加载复用同 CA | 正常 | @TempDir 已生成 | 第二次构造后 getCaCertificatePem | 与第一次输出逐字节一致 | 高 |
+| TC-U10 | CaCertManager 加载复用同 CA | 正常 | @TempDir 已生成 | 第二次构造后读 ca-cert.pem 文件 | 与第一次生成的 PEM 逐字节一致 | 高 |
 | TC-U11 | DynamicCertManager 签发与缓存 | 正常 | 真实 CaCertManager | getOrCreateSslContext("a.com") 两次 + "b.com" 一次 | 返回服务端 SslContext；同域名同实例（缓存命中）；不同域名不同实例 | 高 |
 | TC-U12 | DynamicCertManager IP 分支签发 | 正常 | 同上 | getOrCreateSslContext("127.0.0.1") | iPAddress SAN 分支正常签发且独立缓存；均服务端模式（SAN 内容校验受 SslContext API 限制，由 TC-I09 真实握手与 TC-M01 手工 MITM 覆盖） | 中 |
 | TC-U13 | GrayHeaderModifier 默认关闭不注入 | 正常 | 默认实例 | modifyHeaders 调用 | 原有头保留，无 grayreleasetag | 高 |
@@ -40,7 +40,6 @@
 | TC-I03 | HTTP 代理转发与捕获 | 正常 | 内嵌上游返回 200+JSON | 客户端走代理请求 http://127.0.0.1:{up}/path?q=1 | 响应体透传；/api/traffic 捕获 host=127.0.0.1、path=/path、query=q=1、status=200 | 高 |
 | TC-I04 | 流量详情完整性 | 正常 | TC-I03 已捕获 | GET /api/traffic/{id} | 含 requestHeaders（Host）、responseBody、durationMs、responseContentType | 高 |
 | TC-I05 | /api/clear 方法校验与清空 | 正常/异常 | 已有流量 | GET /api/clear → 405；POST → 清空 | GET 405；POST 200 后列表 total=0 | 高 |
-| TC-I06 | CA 证书下载 | 正常 | 服务已启动 | GET /api/cert | 200；application/x-x509-ca-cert；含 BEGIN CERTIFICATE | 中 |
 | TC-I07 | WebSocket 实时推送与心跳 | 正常 | WS 连 /ws | sendPing 等 Pong；经代理产生新请求 | onPong 收到心跳响应；onText 收到 JSON，含 id/host/method | 高 |
 | TC-I08 | 域名过滤（服务端） | 正常 | 已捕获多域名 | GET /api/traffic?domain=xxx | 仅返回 host 含关键字的记录 | 中 |
 | TC-I09 | CONNECT 隧道 MITM 链路 | 正常/异常 | CONNECT 指向已关闭端口 | raw CONNECT→TLS 握手（信任所有）→发 GET | 200 Connection Established；握手成功（SNI 兑底签发+服务端 TLS 挂载生效）；上游不可达回 502 | 高 |
