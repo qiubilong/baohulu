@@ -167,9 +167,13 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
     }
 
     /**
-     * 清空流量：POST /api/clear
+     * 清空流量：POST /api/clear（仅 POST，防 GET 误触与跨页 CSRF 骚扰清空）
      */
     private void handleClear(ChannelHandlerContext ctx, FullHttpRequest request) {
+        if (!io.netty.handler.codec.http.HttpMethod.POST.equals(request.method())) {
+            writeJson(ctx, request, HttpResponseStatus.METHOD_NOT_ALLOWED, Map.of("error", "仅支持 POST"));
+            return;
+        }
         trafficStore.clearTraffic();
         writeJson(ctx, request, HttpResponseStatus.OK, Map.of("ok", true));
     }

@@ -43,6 +43,9 @@ public class TrafficStore {
     private final CopyOnWriteArrayList<Consumer<TrafficEntry>> listeners = new CopyOnWriteArrayList<>();
 
     public TrafficStore(int capacity) {
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("流量缓冲容量必须为正数: " + capacity);
+        }
         this.capacity = capacity;
     }
 
