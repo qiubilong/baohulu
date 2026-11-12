@@ -57,6 +57,7 @@
 | 新增功能: 灰度标记注入 grayreleasetag=gray（FR4 首落地） | ✅ 已完成 | `ec07139` | 用户新需求：GrayHeaderModifier（AtomicBoolean 开关 + equalsIgnoreCase 防重，接入 M1 预留 HeaderModifier 拦截点，BaohuluMain 装配替换 NOOP）+ GET /api/gray / POST /api/gray/toggle + 面板「灰度」按钮实时生效；单元 4 例 + 集成 tc_i12，26/26 通过 |
 | 缺陷修复: 注入头回写流量记录 | ✅ 已完成 | `6008efe` | 用户实测发现开关开启后面板请求头看不到 grayreleasetag：注入发生在上游头副本且不回写 entry（注入本身已生效，tc_i12 上游断言为证）；修复为 modifyHeaders 后回写 requestHeaders，面板展示发往上游的最终形态；tc_i12 补面板详情断言，26/26 通过 |
 | 功能移除: 面板下载 CA 证书 | ✅ 已完成 | `71a5332` | 用户要求：下载功能下线，仅保留一键安装；删 GET /api/cert 路由与 handleCertDownload、CaCertManager.getCaCertificatePem、面板下载链接；启动警告/握手降噪提示改为引导「一键安装CA」；CaInstaller 复验失败提示改附 certutil 命令与 PEM 路径；README 方式二改为直接用 PEM 文件；tc_i06 删除，TC-U09/U10 改读文件断言，25/25 通过 |
+| 新增功能: 详情区复制 URL / cURL 按钮 | ✅ 已完成 | `8374288` | 用户新需求：Tab 行右侧「复制URL」「复制cURL」；cURL 为 CMD 兼容单行命令（-X 方法 + URL + -H 头 + -d 体，剔除 Host/Content-Length/Connection，内部双引号转 \"、换行换空格），Postman Import → Raw text 可直接导入重放；剪贴板 clipboard API 主路径 + execCommand 降级；纯前端零后端改动，UI 交互归 TC-M04 手工覆盖，25/25 回归通过 |
 
 ## 批次记录
 ### 批次 1（Task 1-3）：工程骨架 + 数据基础 + 证书基础
