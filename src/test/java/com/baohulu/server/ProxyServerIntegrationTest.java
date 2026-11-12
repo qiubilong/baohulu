@@ -30,7 +30,7 @@ import org.junit.jupiter.api.io.TempDir;
 import com.baohulu.cert.CaCertManager;
 import com.baohulu.cert.DynamicCertManager;
 import com.baohulu.panel.PanelRouteHandler;
-import com.baohulu.proxy.HeaderModifier;
+import com.baohulu.proxy.GrayHeaderModifier;
 import com.baohulu.proxy.UpstreamForwarder;
 import com.baohulu.traffic.TrafficStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,15 +69,17 @@ class ProxyServerIntegrationTest {
     /** 走代理客户端（转发流量） */
     private static HttpClient proxyClient;
 
-    /** 最近一次内嵌上游收到的请求头名（供转发剥离断言，Headers 键保留 wire 原始大小写） */
-    private static volatile List<String> upstreamSeenHeaderNames = List.of();
+    /** 最近一次内嵌上游收到的请求头（多值逗号合并，供剥离/注入断言） */
+    private static volatile Map<String, String> upstreamSeenHeaders = Map.of();
 
     @BeforeAll
     static void startAll(@TempDir Path tempDir) throws Exception {
         // 内嵌上游：任意路径返回 JSON，/binary 返回二进制（验二进制标记）
         upstream = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         upstream.createContext("/", exchange -> {
-            upstreamSeenHeaderNames = List.copyOf(exchange.getRequestHeaders().keySet());
+            Map<String, String> merged = new java.util.LinkedHashMap<>();
+            exchange.getRequestHeaders().forEach((k, v) -> merged.put(k, String.join(",", v)));
+            upstreamSeenHeaders = Map.copyOf(merged);
             if (exchange.getRequestURI().getPath().endsWith("/binary")) {
                 byte[] body = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A};
                 exchange.getResponseHeaders().set("Content-Type", "image/png");
@@ -102,7 +104,8 @@ class ProxyServerIntegrationTest {
         trafficStore = new TrafficStore(50);
         CaCertManager caCertManager = new CaCertManager(tempDir);
         DynamicCertManager dynamicCertManager = new DynamicCertManager(caCertManager);
-        UpstreamForwarder forwarder = new UpstreamForwarder(trafficStore, HeaderModifier.NOOP, 1024);
+        GrayHeaderModifier grayHeaderModifier = new GrayHeaderModifier();
+        UpstreamForwarder forwarder = new UpstreamForwarder(trafficStore, grayHeaderModifier, 1024);
 
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
@@ -112,7 +115,7 @@ class ProxyServerIntegrationTest {
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childHandler(new ProxyServerInitializer(dynamicCertManager, forwarder,
-                        () -> new PanelRouteHandler(trafficStore, caCertManager, 0)));
+                        () -> new PanelRouteHandler(trafficStore, caCertManager, grayHeaderModifier, 0)));
         serverChannel = bootstrap.bind("127.0.0.1", 0).sync().channel();
         proxyPort = ((InetSocketAddress) serverChannel.localAddress()).getPort();
 
@@ -390,8 +393,43 @@ class ProxyServerIntegrationTest {
                 .GET().build();
         HttpResponse<String> response = proxyClient.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
-        assertTrue(upstreamSeenHeaderNames.stream().noneMatch(
+        assertTrue(upstreamSeenHeaders.keySet().stream().noneMatch(
                         name -> name.equalsIgnoreCase("accept-encoding")),
-                "上游不应收到任何大小写形态的 Accept-Encoding, 实际: " + upstreamSeenHeaderNames);
+                "上游不应收到任何大小写形态的 Accept-Encoding, 实际: " + upstreamSeenHeaders.keySet());
+    }
+
+    /**
+     * 灰度标记注入：面板开关实时生效——默认关闭不注入，开启后上游收到 grayreleasetag=gray，
+     * 关闭后恢复不注入
+     */
+    @Test
+    void tc_i12_gray_header_toggle_and_inject() throws Exception {
+        // 默认关闭
+        Map<String, Object> state = JSON.readValue(get(directClient, "/api/gray").body(), Map.class);
+        assertEquals(false, state.get("enabled"));
+        getViaProxy("/gray-off");
+        assertTrue(upstreamSeenHeaders.keySet().stream()
+                        .noneMatch(n -> n.equalsIgnoreCase("grayreleasetag")),
+                "默认关闭不应注入, 实际: " + upstreamSeenHeaders.keySet());
+
+        // 面板开启
+        HttpRequest toggle = HttpRequest.newBuilder(
+                        URI.create("http://127.0.0.1:" + proxyPort + "/api/gray/toggle"))
+                .timeout(java.time.Duration.ofSeconds(10)).POST(HttpRequest.BodyPublishers.noBody()).build();
+        assertEquals(true, JSON.readValue(
+                directClient.send(toggle, HttpResponse.BodyHandlers.ofString()).body(), Map.class).get("enabled"));
+
+        getViaProxy("/gray-on");
+        boolean hit = upstreamSeenHeaders.entrySet().stream().anyMatch(e ->
+                e.getKey().equalsIgnoreCase("grayreleasetag") && "gray".equals(e.getValue()));
+        assertTrue(hit, "开启后上游应收到 grayreleasetag=gray, 实际: " + upstreamSeenHeaders);
+
+        // 再次切换关闭后恢复不注入
+        assertEquals(false, JSON.readValue(
+                directClient.send(toggle, HttpResponse.BodyHandlers.ofString()).body(), Map.class).get("enabled"));
+        getViaProxy("/gray-off-again");
+        assertTrue(upstreamSeenHeaders.keySet().stream()
+                        .noneMatch(n -> n.equalsIgnoreCase("grayreleasetag")),
+                "关闭后应恢复不注入, 实际: " + upstreamSeenHeaders.keySet());
     }
 }

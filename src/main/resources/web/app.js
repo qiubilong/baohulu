@@ -133,6 +133,30 @@ document.getElementById('btn-install-cert').addEventListener('click', async () =
     }
 });
 
+/* ---------- 灰度标记开关：开启后所有上游请求注入 grayreleasetag=gray ---------- */
+
+const grayBtn = document.getElementById('btn-gray');
+
+function updateGrayBtn(enabled) {
+    grayBtn.textContent = enabled ? '灰度:开' : '灰度:关';
+    grayBtn.classList.toggle('active', enabled);
+}
+
+grayBtn.addEventListener('click', async () => {
+    try {
+        const resp = await fetch('/api/gray/toggle', { method: 'POST' });
+        updateGrayBtn((await resp.json()).enabled);
+    } catch (e) {
+        console.warn('灰度开关切换失败', e);
+    }
+});
+
+// 刷新页面后从服务端恢复开关显示
+fetch('/api/gray')
+    .then((resp) => resp.json())
+    .then((data) => updateGrayBtn(data.enabled))
+    .catch((e) => console.warn('获取灰度状态失败', e));
+
 document.getElementById('btn-pause').addEventListener('click', function () {
     paused = !paused;
     this.textContent = paused ? '继续' : '暂停';

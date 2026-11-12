@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.baohulu.cert.CaCertManager;
 import com.baohulu.cert.DynamicCertManager;
 import com.baohulu.config.AppConfig;
-import com.baohulu.proxy.HeaderModifier;
+import com.baohulu.proxy.GrayHeaderModifier;
 import com.baohulu.proxy.UpstreamForwarder;
 import com.baohulu.panel.PanelRouteHandler;
 import com.baohulu.server.ProxyServerInitializer;
@@ -41,12 +41,14 @@ public class BaohuluMain {
         CaCertManager caCertManager = new CaCertManager(
                 Path.of(System.getProperty("user.home"), ".baohulu", "ca"));
         DynamicCertManager dynamicCertManager = new DynamicCertManager(caCertManager);
+        // 灰度标记注入器：面板可动态开关，开启后上游请求注入 grayreleasetag=gray
+        GrayHeaderModifier grayHeaderModifier = new GrayHeaderModifier();
         UpstreamForwarder upstreamForwarder = new UpstreamForwarder(
-                trafficStore, HeaderModifier.NOOP, config.bodyMaxKb());
+                trafficStore, grayHeaderModifier, config.bodyMaxKb());
         // 面板路由：静态资源 + REST + WebSocket 推送
         ProxyServerInitializer initializer = new ProxyServerInitializer(
                 dynamicCertManager, upstreamForwarder,
-                () -> new PanelRouteHandler(trafficStore, caCertManager, config.port()));
+                () -> new PanelRouteHandler(trafficStore, caCertManager, grayHeaderModifier, config.port()));
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();

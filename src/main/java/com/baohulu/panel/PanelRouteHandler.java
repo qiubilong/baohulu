@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.baohulu.cert.CaCertManager;
 import com.baohulu.cert.CaInstaller;
+import com.baohulu.proxy.GrayHeaderModifier;
 import com.baohulu.traffic.TrafficEntry;
 import com.baohulu.traffic.TrafficStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,11 +74,15 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
 
     private final CaCertManager caCertManager;
 
+    private final GrayHeaderModifier grayHeaderModifier;
+
     private final int port;
 
-    public PanelRouteHandler(TrafficStore trafficStore, CaCertManager caCertManager, int port) {
+    public PanelRouteHandler(TrafficStore trafficStore, CaCertManager caCertManager,
+                             GrayHeaderModifier grayHeaderModifier, int port) {
         this.trafficStore = trafficStore;
         this.caCertManager = caCertManager;
+        this.grayHeaderModifier = grayHeaderModifier;
         this.port = port;
     }
 
@@ -96,6 +101,7 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
             case "/api/traffic" -> handleTrafficList(ctx, request, queryString);
             case "/api/cert" -> handleCertDownload(ctx, request);
             case "/api/cert/install" -> handleCertInstall(ctx, request);
+            case "/api/gray", "/api/gray/toggle" -> handleGray(ctx, request, path);
             case "/api/clear" -> handleClear(ctx, request);
             default -> {
                 if (path.startsWith("/api/traffic/")) {
@@ -193,6 +199,28 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
         }
         trafficStore.clearTraffic();
         writeJson(ctx, request, HttpResponseStatus.OK, Map.of("ok", true));
+    }
+
+    /**
+     * 灰度标记开关：GET /api/gray 查询状态；POST /api/gray/toggle 切换注入开关（实时生效）
+     */
+    private void handleGray(ChannelHandlerContext ctx, FullHttpRequest request, String path) {
+        boolean isQuery = "/api/gray".equals(path)
+                && io.netty.handler.codec.http.HttpMethod.GET.equals(request.method());
+        boolean isToggle = "/api/gray/toggle".equals(path)
+                && io.netty.handler.codec.http.HttpMethod.POST.equals(request.method());
+        if (isQuery) {
+            writeJson(ctx, request, HttpResponseStatus.OK,
+                    Map.of("enabled", grayHeaderModifier.isEnabled()));
+            return;
+        }
+        if (isToggle) {
+            writeJson(ctx, request, HttpResponseStatus.OK,
+                    Map.of("enabled", grayHeaderModifier.toggle()));
+            return;
+        }
+        writeJson(ctx, request, HttpResponseStatus.METHOD_NOT_ALLOWED,
+                Map.of("error", "GET /api/gray 查询, POST /api/gray/toggle 切换"));
     }
 
     /**
