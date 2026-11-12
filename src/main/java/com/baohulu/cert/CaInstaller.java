@@ -75,7 +75,7 @@ public final class CaInstaller {
                 return new InstallResult(true, "已安装到「受信任的根证书颁发机构」, 重启浏览器/微信后生效");
             }
             log.warn("certutil 成功但指纹复验未命中, pem={}", pemPath);
-            return new InstallResult(false, "安装命令已执行但复验未通过, 请改用手动下载安装");
+            return new InstallResult(false, "安装命令已执行但复验未通过, 请手动执行: certutil -addstore -user Root \"" + pemPath + "\"");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return new InstallResult(false, "安装被中断");

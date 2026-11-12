@@ -2,7 +2,6 @@ package com.baohulu.cert;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -92,21 +91,6 @@ public class CaCertManager {
      */
     public Path getCertPath() {
         return caDir.resolve(CA_CERT_FILE);
-    }
-
-    /**
-     * 导出 CA 证书 PEM 文本（面板下载安装用）
-     *
-     * @return PEM 格式证书文本
-     */
-    public String getCaCertificatePem() {
-        StringWriter stringWriter = new StringWriter();
-        try (JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter)) {
-            pemWriter.writeObject(caCertificate);
-        } catch (IOException e) {
-            throw new IllegalStateException("导出 CA 证书 PEM 失败", e);
-        }
-        return stringWriter.toString();
     }
 
     /**

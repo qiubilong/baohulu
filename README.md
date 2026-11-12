@@ -41,9 +41,13 @@ java -jar target/baohulu.jar
 
 **方式二：手动安装**（一键安装不可用时的备选）
 
-1. 面板工具栏「下载CA证书」，得到 `baohulu-ca.crt`
-2. 双击 → 安装证书 → 存储位置选**本地计算机** → **切勿选「自动选择存储」**（自签 CA 常被误装入「中级证书颁发机构」导致信任不生效）→ 手动指定 **受信任的根证书颁发机构**
-3. 命令行等效：`certutil -addstore -user Root "%USERPROFILE%\.baohulu\ca\ca-cert.pem"`
+证书文件位于 `%USERPROFILE%\.baohulu\ca\ca-cert.pem`，命令行安装：
+
+```powershell
+certutil -addstore -user Root "%USERPROFILE%\.baohulu\ca\ca-cert.pem"
+```
+
+如需图形向导：双击该 PEM 文件 → 安装证书 → 存储位置选**本地计算机** → **切勿选「自动选择存储」**（自签 CA 常被误装入「中级证书颁发机构」导致信任不生效）→ 手动指定 **受信任的根证书颁发机构**。
 
 微信小程序流量无证书绑定（SSL Pinning），信任 baohulu CA 后即可解密。
 

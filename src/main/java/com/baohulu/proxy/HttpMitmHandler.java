@@ -67,7 +67,7 @@ public class HttpMitmHandler extends SimpleChannelInboundHandler<FullHttpRequest
         if (isCertificateUnknownAlert(cause)) {
             // 系统代理接管后未装 CA 的典型场景：本机应用的 HTTPS 集中被拒，首次给人话提示，后续降级避免刷屏
             if (CERT_TRUST_TIP_PRINTED.compareAndSet(false, true)) {
-                log.warn("客户端不信任 baohulu CA 证书: 请从面板页面下载 CA 并安装到「受信任的根证书颁发机构」, "
+                log.warn("客户端不信任 baohulu CA 证书: 请打开面板页面点击「一键安装CA」(安装到「受信任的根证书颁发机构」), "
                         + "安装前走系统代理的应用 HTTPS 将持续失败; 本提示仅打印一次, 后续同类告警降为 DEBUG");
             } else {
                 log.debug("客户端不信任 CA, 握手被拒, remote={}", ctx.channel().remoteAddress());

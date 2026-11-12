@@ -22,18 +22,17 @@ import io.netty.handler.ssl.SslContext;
 class CertManagersTest {
 
     @Test
-    void should_create_ca_then_reload_same_pem(@TempDir Path tempDir) {
+    void should_create_ca_then_reload_same_pem(@TempDir Path tempDir) throws Exception {
         CaCertManager first = new CaCertManager(tempDir);
-        String pem = first.getCaCertificatePem();
+        String pem = Files.readString(tempDir.resolve("ca-cert.pem"));
         assertTrue(pem.contains("BEGIN CERTIFICATE"));
         assertTrue(pem.contains("END CERTIFICATE"));
-        // 持久化文件已落盘
-        assertTrue(Files.exists(tempDir.resolve("ca-cert.pem")));
+        // 私钥也已落盘
         assertTrue(Files.exists(tempDir.resolve("ca-key.pem")));
 
         // 二次构造同目录：加载复用，PEM 逐字节一致
         CaCertManager second = new CaCertManager(tempDir);
-        assertEquals(pem, second.getCaCertificatePem());
+        assertEquals(pem, Files.readString(tempDir.resolve("ca-cert.pem")));
     }
 
     @Test

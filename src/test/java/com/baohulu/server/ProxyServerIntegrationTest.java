@@ -234,15 +234,6 @@ class ProxyServerIntegrationTest {
     }
 
     @Test
-    void tc_i06_ca_cert_download() throws Exception {
-        HttpResponse<String> cert = get(directClient, "/api/cert");
-        assertEquals(200, cert.statusCode());
-        assertEquals("application/x-x509-ca-cert",
-                cert.headers().firstValue("Content-Type").orElse(""));
-        assertTrue(cert.body().contains("BEGIN CERTIFICATE"));
-    }
-
-    @Test
     void tc_i07_websocket_push() throws Exception {
         CountDownLatch messageLatch = new CountDownLatch(1);
         CountDownLatch pongLatch = new CountDownLatch(1);

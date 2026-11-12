@@ -40,7 +40,7 @@ import io.netty.util.CharsetUtil;
 
 /**
  * 面板路由处理器
- * 承载面板直连流量：静态资源（classpath web/）、REST API（流量列表/详情/证书下载/清空）、
+ * 承载面板直连流量：静态资源（classpath web/）、REST API（流量列表/详情/证书安装/灰度开关/清空）、
  * WebSocket 升级（/ws，实时流量推送）
  *
  * @author qiubilong
@@ -99,7 +99,6 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
             case "/app.js" -> serveStatic(ctx, request, "app.js");
             case "/style.css" -> serveStatic(ctx, request, "style.css");
             case "/api/traffic" -> handleTrafficList(ctx, request, queryString);
-            case "/api/cert" -> handleCertDownload(ctx, request);
             case "/api/cert/install" -> handleCertInstall(ctx, request);
             case "/api/gray", "/api/gray/toggle" -> handleGray(ctx, request, path);
             case "/api/clear" -> handleClear(ctx, request);
@@ -159,19 +158,6 @@ public class PanelRouteHandler extends SimpleChannelInboundHandler<FullHttpReque
             return;
         }
         writeJson(ctx, request, HttpResponseStatus.OK, entry);
-    }
-
-    /**
-     * CA 证书下载：GET /api/cert（安装到系统「受信任的根证书颁发机构」）
-     */
-    private void handleCertDownload(ChannelHandlerContext ctx, FullHttpRequest request) {
-        byte[] pemBytes = caCertManager.getCaCertificatePem().getBytes(CharsetUtil.UTF_8);
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK, Unpooled.wrappedBuffer(pemBytes));
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/x-x509-ca-cert");
-        response.headers().set("Content-Disposition", "attachment; filename=baohulu-ca.crt");
-        HttpUtil.setContentLength(response, pemBytes.length);
-        writeResponse(ctx, request, response);
     }
 
     /**
